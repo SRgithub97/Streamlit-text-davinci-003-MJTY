@@ -93,29 +93,20 @@ def contribu_bar(keywords_timesdf_final):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+def hotvalue(data):
+    datelist=data.date.unique()
+    times=[]
+    for i in datelist:
+        time=0
+        for j in range(0,len(data)):
+            if data.loc[j,'date']==i:
+                time+=1
+        times.append(time)
+    dates=data.date.apply(lambda x: x.strftime('%D'))
+    datelist=dates.unique()
+    hotdf=pd.DataFrame(np.array([datelist,times])).T
+    hotdf.columns=['date','hotvalue']
+    return hotdf
 
 
 ## sentiment_classifier = pipeline('zero-shot-classification',model="facebook/bart-large-mnli")
@@ -123,7 +114,7 @@ def contribu_bar(keywords_timesdf_final):
 st.set_page_config(layout='wide', page_title="云之羽 SMA")
 
 
-
+data=load_data('./data/data.xlsx')
 
 keyworddf=load_data('./data/keywords_text-davinci-003.xlsx')
 keywordslistdf=keywordsrawprocessing(keyworddf)
@@ -167,9 +158,10 @@ with st.sidebar:
 col1,col2=st.columns(2)
 with col1:
     st.subheader("Hot value analysis")
-    placeholderforhot=st.empty()
-    placeholderforhot.image('./img/empty.png',use_column_width=True)
-
+    hotdf=hotvalue(data)
+    fig_hotline=px.line(hotdf,x='date',y='hotvalue',title="Hot VS Date")
+    fig_hotline.update_layout(height=300)
+    st.plotly_chart(fig_hotline,theme="streamlit",use_container_width=True,height=300)
     st.subheader("Sentiment analysis")
     placeholderforsentiment=st.empty()
     placeholderforsentiment.image('./img/empty.png',use_column_width=True)
