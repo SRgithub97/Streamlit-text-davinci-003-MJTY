@@ -3,16 +3,14 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import re
-import datetime
-#from transformers import pipeline
 import plotly.express as px
-
 
 
 @st.cache_data
 def load_data(path):
     df=pd.read_excel(path)
     return df
+
 
 @st.cache_data
 def sentimentprocess(sentiment_timesdf):
@@ -94,24 +92,67 @@ def contribu_bar(keywords_timesdf_final):
         return contribu_bardf
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## sentiment_classifier = pipeline('zero-shot-classification',model="facebook/bart-large-mnli")
 
 st.set_page_config(layout='wide', page_title="云之羽 SMA")
 
-sentiment_timesdf=load_data('./data/sentiment_analysis.xlsx')
-sentiment_timesdf=sentimentprocess(sentiment_timesdf)
+
+
+
 keyworddf=load_data('./data/keywords_text-davinci-003.xlsx')
 keywordslistdf=keywordsrawprocessing(keyworddf)
 keywordslistdf_final,keywordsdict_final=wordsprocessing(keywordslistdf.iloc[:,:-1])
 keywords_timesdf_final=wordstimes(keywordslistdf_final,keywordsdict_final)
 
+sentiment_timesdf=load_data('./data/sentiment_analysis.xlsx')
+sentiment_timesdf=sentimentprocess(sentiment_timesdf)
+
+
+if 'keywordanalysis' not in st.session_state:
+    st.session_state['keywordanalysis']=False
+if 'sentimentanalysis' not in st.session_state:
+     st.session_state['sentimentanalysis']=False
+
+
+
 with st.sidebar:
     st.image("./img/logo.jpg",use_column_width=True)
     st.header("Review analysis",divider='rainbow')
     gpt_api_key=st.text_input(label="Please input your GPT API KEY:",type='password')
-    st.write("Do you want to start analysis?")
-    start=st.button(label="Start",key='analysisstart',use_container_width=True)
-
+    st.write("Do you want to start keywords analysis?")
+    keywordstart=st.button(label="Start",key='keystart',use_container_width=True)
+    if keywordstart:
+        st.session_state['keywordanalysis']=True
+    st.write("Do you want to start sentiment analysis?")
+    sentimentstart=st.button(label="Start",key='sentimentstart',use_container_width=True)
+    if sentimentstart:
+        st.session_state['sentimentanalysis']=True
     st.markdown("#### Supported by")
     cols1,cols2=st.columns(2)
     with cols1:
@@ -132,7 +173,7 @@ with col1:
     st.subheader("Sentiment analysis")
     placeholderforsentiment=st.empty()
     placeholderforsentiment.image('./img/empty.png',use_column_width=True)
-    if start:
+    if sentimentstart or st.session_state['sentimentanalysis']:
         fig_sentiment=px.bar(sentiment_timesdf,x='date',y=['Negative_per','Positive_per','Neutral_per'],title='Sentiment VS Date')
         fig_sentiment.update_layout(height=300)
         placeholderforsentiment.plotly_chart(fig_sentiment,theme="streamlit",use_container_width=True,height=300)
@@ -140,7 +181,7 @@ with col2:
     st.subheader("Keywords analysis")
     placeholderforkeywords=st.empty()
     placeholderforkeywords.image('./img/empty.png',use_column_width=True)
-    if start:
+    if keywordstart or st.session_state['keywordanalysis']:
         keywords_top10_final=keywords_timesdf_final.sort_values(by='times',ascending=False).head(10)
         fig_keywords_10_final=px.bar(keywords_top10_final,x='keywords',y='times',title="Keywords VS Date")
         fig_keywords_10_final.update_layout(height=300)
@@ -149,7 +190,7 @@ with col2:
     st.subheader("Contribution analysis")
     placeholderforcontribu=st.empty()
     placeholderforcontribu.image('./img/empty.png',use_column_width=True)
-    if start:
+    if keywordstart or st.session_state['keywordanalysis']:
         contribu_bardf=contribu_bar(keywords_timesdf_final)
         fig_contribu=px.bar(contribu_bardf,x='label',y='contribu',title='Contribution')
         fig_contribu.update_layout(height=300)
